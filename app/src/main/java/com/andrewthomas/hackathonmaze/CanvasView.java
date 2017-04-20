@@ -12,6 +12,7 @@ import android.view.View;
 
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.zip.DeflaterInputStream;
 
 public class CanvasView extends View {
 
@@ -89,6 +90,9 @@ public class CanvasView extends View {
                         case RANDOM_MOUSE:
                             createRandomMouseThread().start();
                             break;
+                        case WALL_FOLLOWER:
+                            createWallFollowerThread().start();
+                            break;
                         default:
                             break;
                     }
@@ -105,9 +109,7 @@ public class CanvasView extends View {
             public void run() {
                 Random random = new Random();
                 while (!runner.isOnSameLocationAs(finish) && running) {
-
                     MazeTile currentTile = maze.getMazeTileAt(runner.getLocationX(), runner.getLocationY());
-                    Log.d("Tile", currentTile.getLocationX() + "," + currentTile.getLocationY());
 
                     ArrayList<Directions> openDirections = new ArrayList<>();
                     switch (runner.getDirection()) {
@@ -195,6 +197,91 @@ public class CanvasView extends View {
                     }
                 }
                 if (runner.isOnSameLocationAs(finish)) {
+                    mazeSolved = true;
+                }
+            }
+        });
+    }
+
+    private Thread createWallFollowerThread() {
+        return new Thread(new Runnable() {
+            public void run() {
+                while (!runner.isOnSameLocationAs(finish) && running) {
+                    MazeTile currentTile = maze.getMazeTileAt(runner.getLocationX(), runner.getLocationY());
+                    Directions nextDirection = null;
+                    switch (runner.getDirection()) {
+                        case NORTH:
+                            if (!currentTile.getIsWallPresent(Directions.EAST)) {
+                                nextDirection = Directions.EAST;
+                            } else if (!currentTile.getIsWallPresent(Directions.NORTH)) {
+                                nextDirection = Directions.NORTH;
+                            } else if (!currentTile.getIsWallPresent(Directions.WEST)) {
+                                nextDirection = Directions.WEST;
+                            } else {
+                                nextDirection = Directions.SOUTH;
+                            }
+                            break;
+                        case SOUTH:
+                            if (!currentTile.getIsWallPresent(Directions.WEST)) {
+                                nextDirection = Directions.WEST;
+                            } else if (!currentTile.getIsWallPresent(Directions.SOUTH)) {
+                                nextDirection = Directions.SOUTH;
+                            } else if (!currentTile.getIsWallPresent(Directions.EAST)) {
+                                nextDirection = Directions.EAST;
+                            } else {
+                                nextDirection = Directions.NORTH;
+                            }
+                            break;
+                        case WEST:
+                            if (!currentTile.getIsWallPresent(Directions.NORTH)) {
+                                nextDirection = Directions.NORTH;
+                            } else if (!currentTile.getIsWallPresent(Directions.WEST)) {
+                                nextDirection = Directions.WEST;
+                            } else if (!currentTile.getIsWallPresent(Directions.SOUTH)) {
+                                nextDirection = Directions.SOUTH;
+                            } else {
+                                nextDirection = Directions.EAST;
+                            }
+                            break;
+                        case EAST:
+                            if (!currentTile.getIsWallPresent(Directions.SOUTH)) {
+                                nextDirection = Directions.SOUTH;
+                            } else if (!currentTile.getIsWallPresent(Directions.EAST)) {
+                                nextDirection = Directions.EAST;
+                            } else if (!currentTile.getIsWallPresent(Directions.NORTH)) {
+                                nextDirection = Directions.NORTH;
+                            } else {
+                                nextDirection = Directions.WEST;
+                            }
+                            break;
+                        default:
+                            if (!currentTile.getIsWallPresent(Directions.WEST)) {
+                                nextDirection = Directions.WEST;
+                            } else if (!currentTile.getIsWallPresent(Directions.SOUTH)) {
+                                nextDirection = Directions.SOUTH;
+                            } else if (!currentTile.getIsWallPresent(Directions.EAST)) {
+                                nextDirection = Directions.EAST;
+                            } else {
+                                nextDirection = Directions.SOUTH;
+                            }
+                            break;
+                    }
+
+                    if (nextDirection != null) {
+                        runner.move(maze, nextDirection);
+                    }
+                    moveToNewLocation();
+                    if (runnerThread != null) {
+                        try {
+                            runnerThread.join();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                if (runner.isOnSameLocationAs(finish))
+
+                {
                     mazeSolved = true;
                 }
             }
