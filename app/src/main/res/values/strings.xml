@@ -5,6 +5,7 @@
         <item>Manual</item>
         <item>Random Mouse</item>
         <item>Wall Follower</item>
+        <item>Recursive</item>
         <item>Depth-First Search</item>
     </string-array>
 </resources>

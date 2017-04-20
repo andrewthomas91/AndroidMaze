@@ -12,6 +12,7 @@ import android.view.View;
 
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Stack;
 import java.util.zip.DeflaterInputStream;
 
 public class CanvasView extends View {
@@ -27,9 +28,11 @@ public class CanvasView extends View {
     private MazeGenerator maze;
     private MazePiece finish;
     private MazePiece runner;
-    private Algorithms solverAlgorithm = Algorithms.RANDOM_MOUSE;
+    private Algorithms solverAlgorithm = Algorithms.MANUAL;
     private Thread runnerThread;
     private boolean running = false;
+    private boolean[][] wasHere;
+    private Stack<MazeTile> solution = new Stack<>();
 
     public CanvasView(Context c, AttributeSet attrs) {
         super(c, attrs);
@@ -92,6 +95,10 @@ public class CanvasView extends View {
                             break;
                         case WALL_FOLLOWER:
                             createWallFollowerThread().start();
+                            break;
+                        case RECURSIVE:
+                            wasHere = new boolean[maze.getSizeX()][maze.getSizeY()];
+                            createRecursiveThread().start();
                             break;
                         default:
                             break;
@@ -288,6 +295,82 @@ public class CanvasView extends View {
         });
     }
 
+    private Thread createRecursiveThread() {
+        return new Thread(new Runnable() {
+            public void run() {
+
+                recursiveSolve(runner.getLocationX(), runner.getLocationY());
+
+                MazeTile currentTile;
+                while(!solution.empty() && running) {
+                    currentTile = solution.pop();
+                    if(runner.isOnSameLocationAs(currentTile)) {
+                        continue;
+                    }
+                    runner.move(currentTile.getLocationX(), currentTile.getLocationY());
+                    moveToNewLocation();
+                    if (runnerThread != null) {
+                        try {
+                            runnerThread.join();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                if(running) {
+                    runner.move(finish.getLocationX(), finish.getLocationY());
+                    moveToNewLocation();
+                    if (runnerThread != null) {
+                        try {
+                            runnerThread.join();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                if (runner.isOnSameLocationAs(finish)) {
+                    mazeSolved = true;
+                }
+            }
+        });
+    }
+
+    public boolean recursiveSolve(int x, int y) {
+        if (x == finish.getLocationX() && y == finish.getLocationY()) {
+            return true;
+        }
+        if (wasHere[x][y]) {
+            return false;
+        }
+        wasHere[x][y] = true;
+        MazeTile currentTile = maze.getMazeTileAt(x, y);
+        if (!currentTile.getIsWallPresent(Directions.WEST)) {
+            if (recursiveSolve(x - 1, y)) {
+                solution.push(new MazeTile(x, y));
+                return true;
+            }
+        }
+        if (!currentTile.getIsWallPresent(Directions.EAST)) {
+            if (recursiveSolve(x + 1, y)) {
+                solution.push(new MazeTile(x, y));
+                return true;
+            }
+        }
+        if (!currentTile.getIsWallPresent(Directions.NORTH)) {
+            if (recursiveSolve(x, y - 1)) {
+                solution.push(new MazeTile(x, y));
+                return true;
+            }
+        }
+        if (!currentTile.getIsWallPresent(Directions.SOUTH)) {
+            if (recursiveSolve(x, y + 1)) {
+                solution.push(new MazeTile(x, y));
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void moveToNewLocation() {
         runnerInMotion = true;
         oldCoordinateX = runner.getOldCoordinateX();
@@ -361,6 +444,7 @@ public class CanvasView extends View {
 
     public void resetMaze() {
         running = false;
+        solution.clear();
         clearCanvas();
         mazeSolved = false;
         mazeSizeWidth = (width / mazeTileWidthAndHeight) - 1;

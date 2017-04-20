@@ -98,4 +98,8 @@ public class MazeGenerator {
         int yInt = (int) y;
         return maze[xInt][yInt];
     }
+
+    public MazeTile[][] getMaze() {
+        return maze;
+    }
 }

@@ -20,6 +20,10 @@ public class MazePiece {
         return this.locationX == otherPiece.getLocationX() && this.locationY == otherPiece.getLocationY();
     }
 
+    public boolean isOnSameLocationAs(MazeTile mazeTile ) {
+        return this.locationX == mazeTile.getLocationX() && this.locationY == mazeTile.getLocationY();
+    }
+
     public void generateNewFinishLocation(int mazeSizeX, int mazeSizeY) {
         locationX = random.nextInt(mazeSizeX / 2) + mazeSizeX / 4;
         locationY = random.nextInt(mazeSizeY / 2) + mazeSizeY / 4;
@@ -61,8 +65,25 @@ public class MazePiece {
         return false;
     }
 
-    public int convertCoordinateToLocation(double coordinate, int tileSize) {
-        return (int) ((coordinate + tileSize / 2) / tileSize) - 1;
+    public boolean move(int newLocationX, int newLocationY) {
+        oldCoordinateX = coordinateX;
+        oldCoordinateY = coordinateY;
+        if(locationX == newLocationX) {
+            if(locationY < newLocationY) {
+                setDirection(Directions.SOUTH);
+            } else {
+                setDirection(Directions.NORTH);
+            }
+        } else {
+            if(locationX < newLocationX) {
+                setDirection(Directions.EAST);
+            } else {
+                setDirection(Directions.WEST);
+            }
+        }
+        setLocationX(newLocationX);
+        setLocationY(newLocationY);
+        return true;
     }
 
     public void setLocationX(int locationX) {
