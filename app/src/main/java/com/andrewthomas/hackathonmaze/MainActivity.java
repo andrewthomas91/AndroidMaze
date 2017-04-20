@@ -50,9 +50,6 @@ public class MainActivity extends Activity {
             case 3:
                 canvasView.setMazeSolverAlgorithm(Algorithms.RECURSIVE);
                 break;
-            case 4:
-                canvasView.setMazeSolverAlgorithm(Algorithms.DEPTH_FIRST_SEARCH);
-                break;
             default:
                 canvasView.setMazeSolverAlgorithm(Algorithms.MANUAL);
                 break;
