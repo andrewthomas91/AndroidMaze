@@ -298,13 +298,15 @@ public class CanvasView extends View {
     private Thread createRecursiveThread() {
         return new Thread(new Runnable() {
             public void run() {
-
+                if (mazeSolved) {
+                    return;
+                }
                 recursiveSolve(runner.getLocationX(), runner.getLocationY());
 
                 MazeTile currentTile;
-                while(!solution.empty() && running) {
+                while (!solution.empty() && running) {
                     currentTile = solution.pop();
-                    if(runner.isOnSameLocationAs(currentTile)) {
+                    if (runner.isOnSameLocationAs(currentTile)) {
                         continue;
                     }
                     runner.move(currentTile.getLocationX(), currentTile.getLocationY());
@@ -317,7 +319,7 @@ public class CanvasView extends View {
                         }
                     }
                 }
-                if(running) {
+                if (running) {
                     runner.move(finish.getLocationX(), finish.getLocationY());
                     moveToNewLocation();
                     if (runnerThread != null) {
