@@ -6,14 +6,12 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Stack;
-import java.util.zip.DeflaterInputStream;
 
 public class CanvasView extends View {
 
