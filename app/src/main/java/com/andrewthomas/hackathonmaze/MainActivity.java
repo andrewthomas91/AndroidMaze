@@ -46,6 +46,7 @@ public class MainActivity extends Activity {
                 break;
             case 2:
                 canvasView.setMazeSolverAlgorithm(Algorithms.WALL_FOLLOWER);
+                break;
             case 3:
                 canvasView.setMazeSolverAlgorithm(Algorithms.RECURSIVE);
                 break;
