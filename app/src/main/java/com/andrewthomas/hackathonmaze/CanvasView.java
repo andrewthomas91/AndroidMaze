@@ -10,10 +10,14 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
+import java.util.ArrayList;
+import java.util.Random;
+
 public class CanvasView extends View {
 
-    private int width, height, mazeSizeWidth, mazeSizeHeight, mazeTileWidthAndHeight;
+    private int width, height, mazeSizeWidth, mazeSizeHeight, mazeTileWidthAndHeight, oldCoordinateX, oldCoordinateY;
     private boolean mazeSolved = false;
+    private boolean runnerInMotion = false;
     private float centerX, centerY;
     private Bitmap bitmap;
     private Canvas canvas;
@@ -22,6 +26,9 @@ public class CanvasView extends View {
     private MazeGenerator maze;
     private MazePiece finish;
     private MazePiece runner;
+    private Algorithms solverAlgorithm = Algorithms.RANDOM_MOUSE;
+    private Thread runnerThread;
+    private boolean running = false;
 
     public CanvasView(Context c, AttributeSet attrs) {
         super(c, attrs);
@@ -61,29 +68,193 @@ public class CanvasView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        if (runnerInMotion) {
+            return false;
+        }
         float x = event.getX();
         float y = event.getY();
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                runner.move(maze, directionOfClickLocation(x, y));
-                if (runner.isOnSameLocationAs(finish)) {
-                    mazeSolved = true;
+                if (solverAlgorithm == Algorithms.MANUAL) {
+                    if (runner.move(maze, directionOfClickLocation(x, y))) {
+                        moveToNewLocation();
+                    }
+                    if (runner.isOnSameLocationAs(finish)) {
+                        mazeSolved = true;
+                    }
+                    invalidate();
+                } else {
+                    running = true;
+                    switch (solverAlgorithm) {
+                        case RANDOM_MOUSE:
+                            createRandomMouseThread().start();
+                            break;
+                        default:
+                            break;
+                    }
                 }
-                invalidate();
                 break;
-//            case MotionEvent.ACTION_MOVE:
-//                runner.move(maze, directionOfClickLocation(x, y));
-//                invalidate();
-//                isTouchDisabled = true;
-//                try {
-//                    Thread.sleep(200);
-//                } catch (InterruptedException e) {}
-//                isTouchDisabled = false;
-//                break;
             case MotionEvent.ACTION_UP:
                 break;
         }
         return true;
+    }
+
+    private Thread createRandomMouseThread() {
+        return new Thread(new Runnable() {
+            public void run() {
+                Random random = new Random();
+                while (!runner.isOnSameLocationAs(finish) && running) {
+
+                    MazeTile currentTile = maze.getMazeTileAt(runner.getLocationX(), runner.getLocationY());
+                    Log.d("Tile", currentTile.getLocationX() + "," + currentTile.getLocationY());
+
+                    ArrayList<Directions> openDirections = new ArrayList<>();
+                    switch (runner.getDirection()) {
+                        case NORTH:
+                            if (!currentTile.getIsWallPresent(Directions.NORTH)) {
+                                openDirections.add(Directions.NORTH);
+                            }
+                            if (!currentTile.getIsWallPresent(Directions.EAST)) {
+                                openDirections.add(Directions.EAST);
+                            }
+                            if (!currentTile.getIsWallPresent(Directions.WEST)) {
+                                openDirections.add(Directions.WEST);
+                            }
+                            if (openDirections.size() == 0) {
+                                openDirections.add(Directions.SOUTH);
+                            }
+                            break;
+                        case SOUTH:
+                            if (!currentTile.getIsWallPresent(Directions.SOUTH)) {
+                                openDirections.add(Directions.SOUTH);
+                            }
+                            if (!currentTile.getIsWallPresent(Directions.EAST)) {
+                                openDirections.add(Directions.EAST);
+                            }
+                            if (!currentTile.getIsWallPresent(Directions.WEST)) {
+                                openDirections.add(Directions.WEST);
+                            }
+                            if (openDirections.size() == 0) {
+                                openDirections.add(Directions.NORTH);
+                            }
+                            break;
+                        case WEST:
+                            if (!currentTile.getIsWallPresent(Directions.WEST)) {
+                                openDirections.add(Directions.WEST);
+                            }
+                            if (!currentTile.getIsWallPresent(Directions.NORTH)) {
+                                openDirections.add(Directions.NORTH);
+                            }
+                            if (!currentTile.getIsWallPresent(Directions.SOUTH)) {
+                                openDirections.add(Directions.SOUTH);
+                            }
+                            if (openDirections.size() == 0) {
+                                openDirections.add(Directions.EAST);
+                            }
+                            break;
+                        case EAST:
+                            if (!currentTile.getIsWallPresent(Directions.EAST)) {
+                                openDirections.add(Directions.EAST);
+                            }
+                            if (!currentTile.getIsWallPresent(Directions.NORTH)) {
+                                openDirections.add(Directions.NORTH);
+                            }
+                            if (!currentTile.getIsWallPresent(Directions.SOUTH)) {
+                                openDirections.add(Directions.SOUTH);
+                            }
+                            if (openDirections.size() == 0) {
+                                openDirections.add(Directions.WEST);
+                            }
+                            break;
+                        default:
+                            if (!currentTile.getIsWallPresent(Directions.NORTH)) {
+                                openDirections.add(Directions.NORTH);
+                            }
+                            if (!currentTile.getIsWallPresent(Directions.SOUTH)) {
+                                openDirections.add(Directions.SOUTH);
+                            }
+                            if (!currentTile.getIsWallPresent(Directions.EAST)) {
+                                openDirections.add(Directions.EAST);
+                            }
+                            if (!currentTile.getIsWallPresent(Directions.WEST)) {
+                                openDirections.add(Directions.WEST);
+                            }
+                            break;
+                    }
+                    int directionToGo = random.nextInt(openDirections.size());
+                    runner.move(maze, openDirections.get(directionToGo));
+
+                    moveToNewLocation();
+                    if (runnerThread != null) {
+                        try {
+                            runnerThread.join();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                if (runner.isOnSameLocationAs(finish)) {
+                    mazeSolved = true;
+                }
+            }
+        });
+    }
+
+    private void moveToNewLocation() {
+        runnerInMotion = true;
+        oldCoordinateX = runner.getOldCoordinateX();
+        oldCoordinateY = runner.getOldCoordinateY();
+        createNewRunnerThread();
+        runnerThread.start();
+    }
+
+    private void createNewRunnerThread() {
+        runnerThread = new Thread(new Runnable() {
+            public void run() {
+                int count = 0;
+                while (count <= runner.getTileSize()) {
+                    try {
+                        switch (runner.getDirection()) {
+                            case EAST:
+                                runner.setCoordinateX(oldCoordinateX + count);
+                                break;
+                            case WEST:
+                                runner.setCoordinateX(oldCoordinateX - count);
+                                break;
+                            case SOUTH:
+                                runner.setCoordinateY(oldCoordinateY + count);
+                                break;
+                            case NORTH:
+                                runner.setCoordinateY(oldCoordinateY - count);
+                                break;
+                            default:
+                                break;
+                        }
+                        Thread.sleep(25);
+                        count = (count + runner.getTileSize() / 10);
+                        postInvalidate();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                runner.setCoordinateX((runner.getLocationX() + 1) * runner.getTileSize());
+                runner.setCoordinateY((runner.getLocationY() + 1) * runner.getTileSize());
+                runnerInMotion = false;
+            }
+        });
+    }
+
+    private Thread createNewSleepThread() {
+        return new Thread(new Runnable() {
+            public void run() {
+                try {
+                    Thread.sleep(250);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     private Directions directionOfClickLocation(float x, float y) {
@@ -109,7 +280,12 @@ public class CanvasView extends View {
         return Directions.NONE;
     }
 
+    public void setMazeSolverAlgorithm(Algorithms algorithm) {
+        solverAlgorithm = algorithm;
+    }
+
     public void resetMaze() {
+        running = false;
         clearCanvas();
         mazeSolved = false;
         mazeSizeWidth = (width / mazeTileWidthAndHeight) - 1;
