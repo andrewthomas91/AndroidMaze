@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">HackathonMaze</string>
+    <string-array
+        name="maze_solver_algorithms">
+        <item>Manual</item>
+        <item>Random Mouse</item>
+        <item>Wall Follower</item>
+        <item>Depth-First Search</item>
+    </string-array>
 </resources>
