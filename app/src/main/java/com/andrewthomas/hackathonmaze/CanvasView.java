@@ -273,6 +273,7 @@ public class CanvasView extends View {
                     }
 
                     if (nextDirection != null) {
+                        maze.getMazeTileAt(runner.getLocationX(), runner.getLocationY()).setColor(Color.GREEN);
                         runner.move(maze, nextDirection);
                     }
                     moveToNewLocation();
@@ -303,22 +304,12 @@ public class CanvasView extends View {
 
                 MazeTile currentTile;
                 while (!solution.empty() && running) {
+                    maze.getMazeTileAt(runner.getLocationX(), runner.getLocationY()).setColor(Color.GREEN);
                     currentTile = solution.pop();
                     if (runner.isOnSameLocationAs(currentTile)) {
                         continue;
                     }
                     runner.move(currentTile.getLocationX(), currentTile.getLocationY());
-                    moveToNewLocation();
-                    if (runnerThread != null) {
-                        try {
-                            runnerThread.join();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-                if (running) {
-                    runner.move(finish.getLocationX(), finish.getLocationY());
                     moveToNewLocation();
                     if (runnerThread != null) {
                         try {
@@ -337,6 +328,7 @@ public class CanvasView extends View {
 
     public boolean recursiveSolve(int x, int y) {
         if (x == finish.getLocationX() && y == finish.getLocationY()) {
+            solution.push(new MazeTile(x, y));
             return true;
         }
         if (wasHere[x][y]) {
@@ -502,7 +494,6 @@ public class CanvasView extends View {
     }
 
     public void drawMaze(Canvas canvas) {
-        paint.setColor(Color.BLACK);
         if (maze != null) {
             for (int x = 0; x < maze.getSizeX(); x++) {
                 for (int y = 0; y < maze.getSizeY(); y++) {
@@ -521,6 +512,10 @@ public class CanvasView extends View {
         float right = (x * mazeTileWidthAndHeight) + (mazeTileWidthAndHeight / 2) + 1;
         float bottom = (y * mazeTileWidthAndHeight) + (mazeTileWidthAndHeight / 2) + 1;
 
+        paint.setColor(mazeTile.getColor());
+        canvas.drawRect(left, top, right, bottom, paint);
+
+        paint.setColor(Color.BLACK);
         if (mazeTile.getIsWallPresent(Directions.NORTH)) {
             canvas.drawLine(left, top, right, top, paint);
         }

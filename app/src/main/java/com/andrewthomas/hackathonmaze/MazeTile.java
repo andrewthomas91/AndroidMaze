@@ -1,8 +1,10 @@
 package com.andrewthomas.hackathonmaze;
 
+import android.graphics.Color;
+
 public class MazeTile {
     private boolean wallNorth, wallEast, wallSouth, wallWest, visited;
-    private int locationX, locationY;
+    private int locationX, locationY, tileColor;
 
     public MazeTile(int locationX, int locationY) {
         wallNorth = true;
@@ -12,6 +14,7 @@ public class MazeTile {
         visited = false;
         this.locationX = locationX;
         this.locationY = locationY;
+        this.tileColor = Color.WHITE;
     }
 
     public void setIsWallPresent(Directions direction, boolean isWallPresent) {
@@ -27,6 +30,10 @@ public class MazeTile {
 
     public void setVisited(boolean newValue) {
         visited = newValue;
+    }
+
+    public void setColor(int color) {
+        tileColor = color;
     }
 
     public boolean getIsWallPresent(Directions direction) {
@@ -49,5 +56,9 @@ public class MazeTile {
 
     public boolean getVisited() {
         return visited;
+    }
+
+    public int getColor() {
+        return tileColor;
     }
 }
