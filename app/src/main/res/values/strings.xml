@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">HackathonMaze</string>
+    <string name="app_name">Maze</string>
     <string-array
         name="maze_solver_algorithms">
         <item>Manual</item>
